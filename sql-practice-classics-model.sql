@@ -251,7 +251,7 @@ WHERE state = 'CA';
 SELECT orderdate, customername, COUNT(productcode) AS numberofuniqueproducts
 FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
 GROUP BY orderdate, customername
-HAVING count(productcode) > 16
+HAVING COUNT(productcode) > 16
 ORDER BY numberofuniqueproducts DESC;
 
 -- #5
