@@ -80,19 +80,16 @@ WHERE reportsto IS NULL;
 SELECT ordernumber, productcode, quantityordered, priceeach, orderlinenumber
 FROM Orders NATURAL JOIN OrderDetails
 WHERE ordernumber = 10270 OR ordernumber = 10272 OR ordernumber = 10279; 
-
 -- method 2:
 SELECT ordernumber, productcode, quantityordered, priceeach, orderlinenumber
 FROM Orders NATURAL JOIN OrderDetails
 WHERE ordernumber IN(10270, 10272,10279); 
-
 -- 19.	List of productlines and vendors that supply the products in that productline. (65)
 -- NOT THE ANSWER (JUST TO MORE CLEARLY SEE THE DUPLICATES):
 SELECT productline, productvendor
 FROM ProductLines NATURAL JOIN Products
 ORDER BY productline, productvendor;
-
--- ACTUAL ANSWER:
+-- ACTUAL ANSWER FOR #19:
 SELECT DISTINCT productline, productvendor
 FROM ProductLines NATURAL JOIN Products;
 
@@ -126,7 +123,7 @@ ON Customers.salesrepemployeenumber = Employees.employeenumber;
 
 -- Aggregate Functions
 -- 25.	Find the total of all payments made by each customer (98)
-SELECT customername, sum(amount) AS totalpayments
+SELECT customername, SUM(amount) AS totalpayments
 FROM Customers NATURAL JOIN Payments
 GROUP BY customername;
 -- 26.	Find the largest payment made by a customer (1)
@@ -171,7 +168,6 @@ FROM Products NATURAL JOIN OrderDetails
 GROUP BY productname, productcode
 HAVING SUM((priceeach-buyprice) * quantityordered) > 60000
 ORDER BY profit DESC;
-
 -- 34.	List the average of the money spent on each product across all orders 
 --      where that product appears when the customer is based in Japan.  
 --      Show these products in descending order by the average expenditure (45).
@@ -180,16 +176,14 @@ FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
 WHERE country = 'Japan'
 GROUP BY productcode
 ORDER BY averageamountspentonproduct;
-
 -- 35.	What is the profit per product (MSRP-buyprice) (110)
 SELECT productname, (msrp-buyprice)
 FROM products;
-
 -- 36.	List the Customer Name and their total orders (quantity * priceEach) 
 --      across all orders that the customer has ever placed with us,
 --      in descending order by order total 
 --      for those customers who have ordered more than $100,000.00 from us. (32)
-SELECT customername, sum(quantityordered*priceeach) AS allorderstotal
+SELECT customername, SUM(quantityordered*priceeach) AS allorderstotal
 FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
 GROUP BY customername
 HAVING sum(quantityordered*priceeach) > 100000
@@ -226,3 +220,45 @@ ORDER BY allorderstotal desc;
 -- 59.	Select the name of each of two customers who have made at least one payment on the same date as the other.  Make sure that each pair of customers only appears once. (46)
 -- 60.	Find customers that share the same state and country.  The country must be one of the following: UK, Australia, Italy or Canada.  Remember that not all countries have states at all, so you need to substitute a character sting like ‘N/A’ for the state in those cases so that you can compare the states.
 -- 61.	Find all of the customers who have the same sales representative as some other customer, and either customer name has ‘Australian’ in it.  List each of the customers sharing a sales representative, and the name of the sales representative.  Order by the name of the first customer, then the second.  Do not show any combination more than once. (9)
+
+-- #1
+-- List all employees first name, last name, email, and city who work in any of the California offices
+SELECT firstname, lastname, email, city
+FROM Employees NATURAL JOIN Offices
+WHERE state = 'CA';
+
+-- #2
+-- List the order number, order date and shipped date for orders made between June 16, 2014 and July 7, 2014 
+-- and shipped between June 20, 2014 and July 31, 2014. 
+-- Display the list sorted by shipped date.
+SELECT ordernumber, orderdate, shippeddate
+FROM Orders
+WHERE orderdate BETWEEN '2014-06-16' AND '2014-07-07'
+AND shippeddate BETWEEN '2014-06-20' AND '2014-07-31'
+ORDER BY shippeddate;
+
+-- #3
+-- List all customers and their sales rep even if they don't have a sales rep for all customers who do business in California
+SELECT customername, lastname, firstname
+FROM Customers C LEFT OUTER JOIN Employees E
+ON C.salesrepemployeenumber = E.employeenumber
+WHERE state = 'CA';
+
+-- #4
+-- For each order, list the order date, the customer name, and the number of products ordered.
+-- Do this in descending order by the nubmer of products ordered.
+-- Show only those orders that have ordered 17 or more different items.
+SELECT orderdate, customername, COUNT(productcode) AS numberofuniqueproducts
+FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
+GROUP BY orderdate, customername
+HAVING count(productcode) > 16
+ORDER BY numberofuniqueproducts DESC;
+
+-- #5
+-- List the product code, product description and potential profit (quantityinstock*(msrp-buyprice))
+-- for all products where we have less than 200 in stock.
+-- Make sure you create an alias for the potential profit column.
+SELECT productcode, productdescription, SUM(quantityinstock*(msrp-buyprice)) AS totalpotentialprofit
+FROM Products
+WHERE quantityinstock < 200
+GROUP BY productcode, productdescription;
