@@ -175,7 +175,15 @@ SELECT productcode, AVG(quantityordered*priceeach) AS averageamountspentonproduc
 FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
 WHERE country = 'Japan'
 GROUP BY productcode
-ORDER BY averageamountspentonproduct;
+ORDER BY averageamountspentonproduct DESC;
+
+-- PROFESSOR SOLUTION (#34):
+SELECT productcode, avg(quantityordered*priceeach) "average value"
+FROM OrderDetails inner join orders using (ordernumber)
+inner join customers cust using (customernumber)
+where cust.country = 'Japan'
+group by productcode
+order by avg(quantityordered*priceeach) desc;
 -- 35.	What is the profit per product (MSRP-buyprice) (110)
 SELECT productname, (msrp-buyprice)
 FROM products;
@@ -187,16 +195,18 @@ SELECT customername, SUM(quantityordered*priceeach) AS allorderstotal
 FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
 GROUP BY customername
 HAVING sum(quantityordered*priceeach) > 100000
-ORDER BY allorderstotal desc;
+ORDER BY allorderstotal DESC;
 
+-- PART OF PROFESSOR SOLUTION(#36):
+FROM Customer inner join Orders using (customernumber) inner join Orderdetails using (ordernumber);
 
 -- Set Operations
 -- 37.	List all customers who didn't order in 2015 (78)
 -- 38.	List all people that we deal with (employees and customer contacts). Display first name, last name, company name (or employee) (145)
 -- 39.	List the last name, first name, and employee number of all of the employees who do not have any customers.  Order by last name first, then the first name. (8).
--- 40.	List the states and the country that the state is part of that have customers but not offices, offices but not customers, or both one or more customers and one or more offices all in one query.  Designate which state is which with the string 'Customer', 'Office', or 'Both'.  If a state falls into the â€œBothï¿½? category, do not list it as a Customer or an Office state.  Order by the country, then the state.  Give the category column (where you list â€˜Customerâ€™, â€˜Officeâ€™, or â€˜Bothâ€™) a header of â€œCategoryï¿½? and exclude any entries in which the state is null. (19)
+-- 40.	List the states and the country that the state is part of that have customers but not offices, offices but not customers, or both one or more customers and one or more offices all in one query.  Designate which state is which with the string 'Customer', 'Office', or 'Both'.  If a state falls into the “Both?? category, do not list it as a Customer or an Office state.  Order by the country, then the state.  Give the category column (where you list ‘Customer’, ‘Office’, or ‘Both’) a header of “Category?? and exclude any entries in which the state is null. (19)
 -- 41.	List the Product Code and Product name of every product that has never been in an order in which the customer asked for more than 48 of them.  Order by the Product Name.  (8)
--- 42.	List the first name and last name of any customer who ordered any products from either of the two product lines â€˜Trainsâ€™ or â€˜Trucks and Busesâ€™.  Do not use an â€œorï¿½?.  Instead perform a union.  Order by the customerâ€™s name.  (61)
+-- 42.	List the first name and last name of any customer who ordered any products from either of the two product lines ‘Trains’ or ‘Trucks and Buses’.  Do not use an “or??.  Instead perform a union.  Order by the customer’s name.  (61)
 -- 43.	List the name of all customers who do not live in the same state and country with any other customer.  Do not use a count for this exercise.  Order by the customer name.
 
 -- Subqueries
@@ -208,7 +218,7 @@ ORDER BY allorderstotal desc;
 -- 49.	What is the order number and the cost of the order for the most expensive orders?  Note that there could be more than one order which all happen to add up to the same cost, and that same cost could be the highest cost among all orders. (1)
 -- 50.	What is the name of the customer, the order number, and the total cost of the most expensive orders? (1)
 -- 51.	Perform the above query using a view. (1)
--- 52.	Show all of the customers who have ordered at least one product with the name â€œFordï¿½? in it, that â€œDragon Souveniers, Ltd.ï¿½? has also ordered.  List them in reverse alphabetical order, and do not consider the case of the letters in the customer name in the ordering.  Show each customer no more than once. (61)
+-- 52.	Show all of the customers who have ordered at least one product with the name “Ford?? in it, that “Dragon Souveniers, Ltd.?? has also ordered.  List them in reverse alphabetical order, and do not consider the case of the letters in the customer name in the ordering.  Show each customer no more than once. (61)
 -- 53.	Which products have an MSRP within 5% of the average MSRP across all products?  List the Product Name, the MSRP, and the average MSRP ordered by the product MSRP. (14)
 -- 54.	List all of the customers who have never made a payment on the same date as another customer. (57)
 -- 55.	Find customers who have ordered the same thing.  Find only those customer pairs who have ordered the same thing as each other at least 201 times (1)
@@ -218,8 +228,8 @@ ORDER BY allorderstotal desc;
 -- 57.	Select all employees who work for the manager that manages the greatest number of employee (12)
 -- 58.	List all employees that have the same last name. Make sure each combination is listed only once (5)
 -- 59.	Select the name of each of two customers who have made at least one payment on the same date as the other.  Make sure that each pair of customers only appears once. (46)
--- 60.	Find customers that share the same state and country.  The country must be one of the following: UK, Australia, Italy or Canada.  Remember that not all countries have states at all, so you need to substitute a character sting like â€˜N/Aâ€™ for the state in those cases so that you can compare the states.
--- 61.	Find all of the customers who have the same sales representative as some other customer, and either customer name has â€˜Australianâ€™ in it.  List each of the customers sharing a sales representative, and the name of the sales representative.  Order by the name of the first customer, then the second.  Do not show any combination more than once. (9)
+-- 60.	Find customers that share the same state and country.  The country must be one of the following: UK, Australia, Italy or Canada.  Remember that not all countries have states at all, so you need to substitute a character sting like ‘N/A’ for the state in those cases so that you can compare the states.
+-- 61.	Find all of the customers who have the same sales representative as some other customer, and either customer name has ‘Australian’ in it.  List each of the customers sharing a sales representative, and the name of the sales representative.  Order by the name of the first customer, then the second.  Do not show any combination more than once. (9)
 
 -- #1
 -- List all employees first name, last name, email, and city who work in any of the California offices
