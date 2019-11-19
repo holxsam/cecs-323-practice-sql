@@ -300,7 +300,41 @@ WHERE productLine =
 );
 -- 47.	Find the first name and last name of all customer contacts
 --      whose customer is located in the same state as the San Francisco office. (11)
+SELECT contactfirstname, contactlastname FROM Customers
+WHERE state = 
+(
+    SELECT DISTINCT state FROM Customers
+    WHERE city = 'San Francisco'
+);
 -- 48.	What is the customer and sales person of the highest priced order? (1)
+SELECT customerName, salesRepEmployeeNumber
+FROM Customers 
+WHERE customerNumber =
+(
+    SELECT customerNumber
+    FROM Orders
+    WHERE orderNumber = 
+    (
+        SELECT orderNumber
+        FROM OrderDetails
+        GROUP BY orderNumber
+        HAVING sum(priceEach*quantityOrdered) =
+        (
+            SELECT MAX(OrderTotals.orderTotal)
+            FROM 
+            (
+                SELECT sum(priceEach*quantityOrdered) AS orderTotal
+                FROM OrderDetails
+                GROUP BY orderNumber
+            ) AS OrderTotals
+        )
+    )
+);
+
+
+
+
+
 -- 49.	What is the order number and the cost of the order for the most expensive orders?
 --      Note that there could be more than one order which all happen to add up to the same cost,
 --      and that same cost could be the highest cost among all orders. (1)
