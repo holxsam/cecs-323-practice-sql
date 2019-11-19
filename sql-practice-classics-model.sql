@@ -206,7 +206,7 @@ FROM Customer inner join Orders using (customernumber) inner join Orderdetails u
 SELECT DISTINCT customerName
 FROM Customers C LEFT OUTER JOIN Orders O
 ON C.customerNumber = O.customerNumber;
-
+---- ANSWER FOR #37:
 SELECT customerName From Customers
 EXCEPT
 SELECT DISTINCT customerName 
@@ -256,7 +256,7 @@ SELECT DISTINCT productCode, productName FROM OrderDetails NATURAL JOIN Products
 --      from either of the two product lines 'Trains' or 'Trucks and Buses'.
 --      Do not use an "or".
 --      Instead perform a union.  
---      Order by the customer’s name.  (61)
+--      Order by the customerï¿½s name.  (61)
 SELECT DISTINCT contactlastname, contactfirstname
 FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails NATURAL JOIN Products
 WHERE productLine = 'Trains'
@@ -389,6 +389,38 @@ AND orderNumber =
 )
 GROUP BY customerName, orderNumber;
 -- 51.	Perform the above query using a view. (1)
+----    YOU NEED TO RUN BOTH QUERIES BELOW:
+----    However, in derby, there is no "OR REPLACE" so after the first time you
+----    create the below view table, theres no way to replace it in the case
+----    that some other order becomes the highest price order besides manually
+----    dropping the view and running it again
+CREATE VIEW V_ORDERNUMBER_OF_HIGHEST_PRICED_ORDER AS
+(
+    SELECT orderNumber
+    FROM OrderDetails
+    GROUP BY orderNumber
+    HAVING sum(priceEach*quantityOrdered) =
+    (
+        SELECT MAX(OrderTotals.orderTotal)
+        FROM 
+        (
+            SELECT sum(priceEach*quantityOrdered) AS orderTotal
+            FROM OrderDetails
+            GROUP BY orderNumber
+        ) AS OrderTotals
+    )
+);
+
+SELECT customerName, orderNumber, sum(priceEach*quantityOrdered) AS "Order Total"
+FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
+WHERE customerNumber =
+(
+    SELECT customerNumber
+    FROM Orders
+    WHERE orderNumber = (SELECT ordernumber FROM V_ORDERNUMBER_OF_HIGHEST_PRICED_ORDER)
+)
+AND orderNumber = (SELECT ordernumber FROM V_ORDERNUMBER_OF_HIGHEST_PRICED_ORDER)
+GROUP BY customerName, orderNumber;
 -- 52.	Show all of the customers who have ordered at least one product
 --      with the name "Ford" in it, that "Dragon Souveniers, Ltd." has also ordered.  
 --      List them in reverse alphabetical order,
@@ -396,16 +428,83 @@ GROUP BY customerName, orderNumber;
 --      Show each customer no more than once. (61)
 -- 53.	Which products have an MSRP within 5% of the average MSRP across all products?
 --      List the Product Name, the MSRP, and the average MSRP ordered by the product MSRP. (14)
+----    Full answer to (#53):
+SELECT productname, msrp, AVG(msrp) AS "not sure what the difference is but ok"
+FROM Products
+GROUP BY productname, msrp
+HAVING msrp <= 1.05 * (SELECT AVG(msrp) FROM Products) 
+AND msrp >= 0.95 * (SELECT AVG(msrp) FROM Products);
+
+----    OR if we dont include the avg(msrp) we dont need to use 'group by' and 'having' (#53):
+SELECT productname, msrp
+FROM products
+where msrp <= 1.05*(SELECT AVG(msrp) FROM Products) AND msrp >= 0.95*(SELECT AVG(msrp) FROM Products);
+
+----    Used to help me understand the problem (#53):
+SELECT msrp from Products;
+SELECT 1.05*(SELECT AVG(msrp) FROM products) from Products;
+SELECT 0.95*(SELECT AVG(msrp) FROM products) from Products;
 -- 54.	List all of the customers who have never made a payment on the same date as another customer. (57)
 -- 55.	Find customers who have ordered the same thing.
 --      Find only those customer pairs who have ordered the same thing as each other at least 201 times (1)
 
 -- Recursion
 -- 56.	What is the manager who manages the greatest number of employees (2)
+SELECT employeeNumber, lastName, firstName
+FROM Employees
+WHERE employeeNumber IN
+(
+    SELECT reportsto
+    FROM Employees
+    GROUP BY reportsto
+    HAVING COUNT(employeeNumber) = 
+    (
+        SELECT MAX(Manager.numOfEmployeesManaged)
+        FROM 
+        (
+            SELECT reportsto, COUNT(employeeNumber) AS numOfEmployeesManaged
+            FROM Employees
+            GROUP BY reportsto
+        ) AS Manager
+    )
+);
 -- 57.	Select all employees who work for the manager that manages the greatest number of employee (12)
+SELECT employeeNumber, lastName, firstName
+FROM Employees
+WHERE reportsto IN
+(
+    SELECT reportsto
+    FROM Employees
+    GROUP BY reportsto
+    HAVING COUNT(employeeNumber) = 
+    (
+        SELECT MAX(Manager.numOfEmployeesManaged)
+        FROM 
+        (
+            SELECT reportsto, COUNT(employeeNumber) AS numOfEmployeesManaged
+            FROM Employees
+            GROUP BY reportsto
+        ) AS Manager
+    )
+);
 -- 58.	List all employees that have the same last name. Make sure each combination is listed only once (5)
+SELECT A.lastname, A.firstname, B.lastname, B.firstname
+FROM employees A INNER JOIN employees B 
+USING (lastname)
+WHERE A.employeenumber > B.employeenumber;
+
 -- 59.	Select the name of each of two customers who have made at least one payment on the same date as the other.
 --      Make sure that each pair of customers only appears once. (46)
+----    BASE ANSWER FOR #59 (helpful for understanding):
+SELECT A.customernumber, A.paymentdate, B.customernumber, B.paymentdate
+FROM Payments A INNER JOIN Payments B
+USING (paymentdate)
+WHERE A.customernumber > B.CUSTOMERNUMBER;
+----    FULL ANSWER FOR #59:
+SELECT Cus_A.customername, Cus_B.customername, A.PAYMENTDATE AS "Common Payment Date"
+FROM (Payments A NATURAL JOIN Customers Cus_A) INNER JOIN (Payments B NATURAL JOIN Customers Cus_B) 
+USING (paymentdate)
+WHERE A.customernumber > B.CUSTOMERNUMBER;
 -- 60.	Find customers that share the same state and country.
 --      The country must be one of the following: UK, Australia, Italy or Canada.
 --      Remember that not all countries have states at all, so you need to substitute
