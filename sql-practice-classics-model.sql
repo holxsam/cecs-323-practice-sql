@@ -272,7 +272,17 @@ ORDER BY contactlastname, contactfirstname;
 -- 44.	What product that makes us the most money (qty*price) (1)
 SELECT productName
 FROM Products NATURAL JOIN OrderDetails
-WHERE quantityOrdered*priceEach = (SELECT max(quantityOrdered*priceEach) FROM OrderDetails);
+GROUP BY productName
+HAVING SUM(quantityOrdered*priceEach) = 
+(
+    SELECT MAX(LIST_OF_PRODUCT_TOTALS.productTotal)
+    FROM
+    (
+        SELECT  productCode, sum(quantityOrdered*priceEach) AS productTotal
+        FROM  OrderDetails
+        GROUP BY productCode
+    ) AS LIST_OF_PRODUCT_TOTALS
+);
 -- 45.	List the product lines and vendors for product lines which are supported by < 5 vendors (3)
 SELECT productLine, productVendor
 FROM Products
@@ -555,3 +565,43 @@ SELECT productcode, productdescription, SUM(quantityinstock*(msrp-buyprice)) AS 
 FROM Products
 WHERE quantityinstock < 200
 GROUP BY productcode, productdescription;
+
+
+--1
+
+SELECT distinct customername from orders natural join customers
+except
+SELECT distinct customername from orders natural join customers where orderdate BETWEEN '07/01/2013' AND '11/30/2013'
+union
+SELECT distinct customername from orders natural join customers where orderdate BETWEEN '07/01/2014' AND '11/30/2014'
+union
+SELECT distinct customername from orders natural join customers where orderdate BETWEEN '07/01/2015' AND '11/30/2015';
+
+
+--2
+SELECT contactlastname, customername from customers where contactlastname in 
+(
+    SELECT lastname from employees
+)
+ORDER BY customername;
+
+--3
+
+SELECT productname, (quantityinstock*msrp) as value from products where (quantityinstock*msrp) = 
+(
+    SELECT min(quantityinstock*msrp) FROM products
+);
+
+--4
+SELECT a.customername, a.POSTALCODE, b.customername, b.postalcode
+FROM customers a inner join customers b using (postalcode)
+WHERE a.customernumber < b.customernumber
+ORDER BY a.customername, b.customername;
+
+
+-- 5
+SELECT city, state from customers where state is not null;
+
+SELECT city, state from offices where state is not null;
+
+SELECT city, state from offices a join customers b where state is not null;
