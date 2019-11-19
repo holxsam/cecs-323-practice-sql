@@ -330,16 +330,64 @@ WHERE customerNumber =
         )
     )
 );
-
-
-
-
-
 -- 49.	What is the order number and the cost of the order for the most expensive orders?
 --      Note that there could be more than one order which all happen to add up to the same cost,
 --      and that same cost could be the highest cost among all orders. (1)
+SELECT orderNumber, sum(priceEach*quantityOrdered) AS "Order Total"
+FROM OrderDetails
+GROUP BY orderNumber
+HAVING sum(priceEach*quantityOrdered) =
+(
+    SELECT MAX(OrderTotals.orderTotal)
+    FROM 
+    (
+        SELECT sum(priceEach*quantityOrdered) AS orderTotal
+        FROM OrderDetails
+        GROUP BY orderNumber
+    ) AS OrderTotals
+);
 -- 50.	What is the name of the customer, the order number,
 --      and the total cost of the most expensive orders? (1)
+SELECT customerName, orderNumber, sum(priceEach*quantityOrdered) AS "Order Total"
+FROM Customers NATURAL JOIN Orders NATURAL JOIN OrderDetails
+WHERE customerNumber =
+(
+    SELECT customerNumber
+    FROM Orders
+    WHERE orderNumber = 
+    (
+        SELECT orderNumber
+        FROM OrderDetails
+        GROUP BY orderNumber
+        HAVING sum(priceEach*quantityOrdered) =
+        (
+            SELECT MAX(OrderTotals.orderTotal)
+            FROM 
+            (
+                SELECT sum(priceEach*quantityOrdered) AS orderTotal
+                FROM OrderDetails
+                GROUP BY orderNumber
+            ) AS OrderTotals
+        )
+    )
+)
+AND orderNumber =
+(
+    SELECT orderNumber
+    FROM OrderDetails
+    GROUP BY orderNumber
+    HAVING sum(priceEach*quantityOrdered) =
+    (
+        SELECT MAX(OrderTotals.orderTotal)
+        FROM 
+        (
+            SELECT sum(priceEach*quantityOrdered) AS orderTotal
+            FROM OrderDetails
+            GROUP BY orderNumber
+        ) AS OrderTotals
+    )
+)
+GROUP BY customerName, orderNumber;
 -- 51.	Perform the above query using a view. (1)
 -- 52.	Show all of the customers who have ordered at least one product
 --      with the name "Ford" in it, that "Dragon Souveniers, Ltd." has also ordered.  
